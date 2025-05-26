@@ -23,86 +23,100 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
   
-  // API base URL
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-  
-  // Register user
+  // Modified to use localStorage instead of API calls
   const register = async (name, email, password) => {
     try {
-      const response = await fetch(`${apiUrl}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ name, email, password }),
-        credentials: 'include'
-      });
+      // Generate a simple token
+      const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
       
-      const data = await response.json();
+      // Create user object
+      const user = {
+        id: Date.now().toString(),
+        name,
+        email,
+        role: 'user',
+        subscription: 'free',
+        createdAt: new Date().toISOString()
+      };
       
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
+      // Save to localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
       
-      // Save auth data
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      
-      setToken(data.token);
-      setUser(data.user);
+      // Update state
+      setToken(token);
+      setUser(user);
       
       toast.success('Registration successful!');
-      return data;
+      return { user, token };
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.message || 'Registration failed');
       throw error;
     }
   };
   
-  // Login user
+  // Modified to use localStorage instead of API calls
   const login = async (email, password) => {
     try {
-      const response = await fetch(`${apiUrl}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, password }),
-        credentials: 'include'
-      });
+      // In a real app, we would validate credentials
+      // For now, just create a dummy user if email contains "test"
+      // Otherwise, throw an error to simulate authentication
       
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+      if (!email.includes('test')) {
+        // Check if we have any users in localStorage that match
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const user = JSON.parse(storedUser);
+          if (user.email === email) {
+            // Generate a simple token
+            const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            
+            // Save to localStorage
+            localStorage.setItem('token', token);
+            
+            // Update state
+            setToken(token);
+            setUser(user);
+            
+            toast.success('Login successful!');
+            return { user, token };
+          }
+        }
+        throw new Error('Invalid email or password');
       }
       
-      // Save auth data
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      // Create dummy user for testing
+      const user = {
+        id: Date.now().toString(),
+        name: email.split('@')[0],
+        email,
+        role: 'user',
+        subscription: 'free',
+        createdAt: new Date().toISOString()
+      };
       
-      setToken(data.token);
-      setUser(data.user);
+      // Generate a simple token
+      const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      
+      // Save to localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      // Update state
+      setToken(token);
+      setUser(user);
       
       toast.success('Login successful!');
-      return data;
+      return { user, token };
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.message || 'Login failed');
       throw error;
     }
   };
   
-  // Logout user
+  // Modified to use localStorage instead of API calls
   const logout = async () => {
     try {
-      await fetch(`${apiUrl}/api/auth/logout`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        credentials: 'include'
-      });
-      
       // Clear auth data
       localStorage.removeItem('token');
       localStorage.removeItem('user');
@@ -114,7 +128,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error);
       
-      // Still clear local auth data even if API call fails
+      // Still clear local auth data even if something fails
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       
@@ -123,93 +137,70 @@ export const AuthProvider = ({ children }) => {
     }
   };
   
-  // Update user profile
+  // Modified to use localStorage instead of API calls
   const updateProfile = async (userData) => {
     try {
-      const response = await fetch(`${apiUrl}/api/users/profile`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(userData),
-        credentials: 'include'
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to update profile');
+      // Get current user data
+      const storedUser = localStorage.getItem('user');
+      if (!storedUser) {
+        throw new Error('User not found');
       }
       
-      // Update stored user data
-      const updatedUser = { ...user, ...data.user };
+      // Update user data
+      const currentUser = JSON.parse(storedUser);
+      const updatedUser = { ...currentUser, ...userData };
+      
+      // Save to localStorage
       localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      // Update state
       setUser(updatedUser);
       
       toast.success('Profile updated successfully');
-      return data;
+      return { user: updatedUser };
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.message || 'Failed to update profile');
       throw error;
     }
   };
   
-  // Update password
+  // Modified to use localStorage instead of API calls
   const updatePassword = async (currentPassword, newPassword) => {
     try {
-      const response = await fetch(`${apiUrl}/api/users/password`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ currentPassword, newPassword }),
-        credentials: 'include'
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to update password');
-      }
+      // In a real app, we would validate the current password
+      // For now, just simulate success
       
       toast.success('Password updated successfully');
-      return data;
+      return { success: true };
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.message || 'Failed to update password');
       throw error;
     }
   };
   
-  // Update subscription
+  // Modified to use localStorage instead of API calls
   const updateSubscription = async (subscription) => {
     try {
-      const response = await fetch(`${apiUrl}/api/users/subscription`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ subscription }),
-        credentials: 'include'
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to update subscription');
+      // Get current user data
+      const storedUser = localStorage.getItem('user');
+      if (!storedUser) {
+        throw new Error('User not found');
       }
       
-      // Update stored user data
-      const updatedUser = { ...user, subscription: data.subscription };
+      // Update subscription
+      const currentUser = JSON.parse(storedUser);
+      const updatedUser = { ...currentUser, subscription };
+      
+      // Save to localStorage
       localStorage.setItem('user', JSON.stringify(updatedUser));
+      
+      // Update state
       setUser(updatedUser);
       
       toast.success('Subscription updated successfully');
-      return data;
+      return { subscription, user: updatedUser };
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.message || 'Failed to update subscription');
       throw error;
     }
   };

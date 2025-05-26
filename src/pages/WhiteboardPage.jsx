@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { io } from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from '../contexts/AuthContext';
 import Whiteboard from '../components/Whiteboard';
 import Toolbar from '../components/Toolbar';
+import { useStore } from '../store';
 
 const WhiteboardPage = () => {
   const [socket, setSocket] = useState(null);
@@ -23,33 +23,17 @@ const WhiteboardPage = () => {
   useEffect(() => {
     const fetchRoom = async () => {
       try {
-        const response = await fetch(`${apiUrl}/api/rooms/${roomId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error('Room not found');
-          } else if (response.status === 403) {
-            throw new Error('You do not have access to this room');
-          } else {
-            throw new Error('Failed to fetch room');
-          }
-        }
-        
-        const data = await response.json();
-        setRoom(data.room);
+        // For demo purposes, simulate a successful room fetch
+        setRoom({ id: roomId, name: `Room ${roomId}` });
+        setLoading(false);
       } catch (error) {
         setError(error.message);
-      } finally {
         setLoading(false);
       }
     };
     
     fetchRoom();
-  }, [roomId, token]);
+  }, [roomId]);
   
   // Connect to socket
   useEffect(() => {
@@ -62,28 +46,52 @@ const WhiteboardPage = () => {
       localStorage.setItem('userId', userId);
     }
     
-    // Connect to socket
-    const newSocket = io(apiUrl, {
-      transports: ['websocket'],
-      query: {
-        roomId,
-        userId,
-        userName: user?.name || localStorage.getItem('userName') || 'Anonymous',
-        token
-      }
-    });
+    // Create a mock socket for demo purposes
+    const mockSocket = {
+      emit: (event, data) => {
+        console.log(`Emitting ${event}:`, data);
+        
+        // Handle different events
+        if (event === 'toolChange') {
+          mockSocket.listeners.toolChange && mockSocket.listeners.toolChange(data);
+        } else if (event === 'colorChange') {
+          mockSocket.listeners.colorChange && mockSocket.listeners.colorChange(data);
+        } else if (event === 'lineWidthChange') {
+          mockSocket.listeners.lineWidthChange && mockSocket.listeners.lineWidthChange(data);
+        } else if (event === 'draw') {
+          mockSocket.listeners.draw && mockSocket.listeners.draw(data);
+        } else if (event === 'clear') {
+          mockSocket.listeners.clear && mockSocket.listeners.clear();
+        }
+      },
+      on: (event, callback) => {
+        if (!mockSocket.listeners) {
+          mockSocket.listeners = {};
+        }
+        mockSocket.listeners[event] = callback;
+      },
+      off: (event) => {
+        if (mockSocket.listeners) {
+          delete mockSocket.listeners[event];
+        }
+      },
+      listeners: {}
+    };
     
-    setSocket(newSocket);
+    setSocket(mockSocket);
     
-    // Listen for users update
-    newSocket.on('users', (connectedUsers) => {
-      setUsers(connectedUsers);
-    });
+    // Simulate connected users
+    setUsers([
+      { id: userId, name: user?.name || 'You' },
+      { id: 'user2', name: 'Jane Doe' },
+      { id: 'user3', name: 'John Smith' }
+    ]);
     
     return () => {
-      newSocket.disconnect();
+      // Clean up
+      mockSocket.listeners = {};
     };
-  }, [room, roomId, user, token]);
+  }, [room, user]);
   
   if (loading) {
     return (
@@ -125,6 +133,15 @@ const WhiteboardPage = () => {
         socket={socket}
         users={users}
       />
+      
+      <style jsx>{`
+        .app {
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          overflow: hidden;
+        }
+      `}</style>
     </div>
   );
 };

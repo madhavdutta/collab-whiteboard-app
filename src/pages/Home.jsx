@@ -1,214 +1,270 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { FaPencilAlt, FaUsers, FaSave, FaLock } from 'react-icons/fa';
 
 const Home = () => {
   const { isAuthenticated } = useAuth();
   
   return (
-    <div>
-      {/* Hero Section */}
-      <section className="text-center py-12">
-        <h1 className="text-4xl font-bold mb-4">Collaborative Whiteboard</h1>
-        <p className="text-xl mb-8 max-w-2xl mx-auto">
-          A real-time collaborative whiteboard for teams, educators, and creatives.
-          Draw, sketch, and collaborate with anyone, anywhere, anytime.
-        </p>
-        
-        <div className="flex justify-center gap-4">
-          {isAuthenticated ? (
-            <Link to="/dashboard" className="btn">
-              Go to Dashboard
-            </Link>
-          ) : (
-            <>
-              <Link to="/register" className="btn">
-                Get Started
-              </Link>
-              <Link to="/login" className="btn btn-outline">
-                Log In
-              </Link>
-            </>
-          )}
-        </div>
-      </section>
-      
-      {/* Features Section */}
-      <section className="py-12 bg-light">
+    <div className="home">
+      <div className="hero">
         <div className="container">
-          <h2 className="text-2xl font-bold mb-8 text-center">Key Features</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="card">
-              <div className="text-center mb-4">
-                <FaPencilAlt className="text-4xl text-primary mx-auto" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-center">Real-time Drawing</h3>
-              <p>
-                Draw and see others' drawings in real-time. Perfect for brainstorming
-                and collaborative work.
+          <div className="hero-content">
+            <h1 className="hero-title">Collaborate in Real-Time with Our Whiteboard App</h1>
+            <p className="hero-subtitle">
+              Create, share, and collaborate on digital whiteboards with your team from anywhere in the world.
+            </p>
+            <div className="hero-actions">
+              {isAuthenticated ? (
+                <Link to="/dashboard" className="btn btn-lg">
+                  Go to Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link to="/register" className="btn btn-lg">
+                    Get Started
+                  </Link>
+                  <Link to="/login" className="btn btn-outline btn-lg">
+                    Login
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="features">
+        <div className="container">
+          <h2 className="section-title">Features</h2>
+          <div className="features-grid">
+            <div className="feature">
+              <div className="feature-icon">🖌️</div>
+              <h3 className="feature-title">Real-Time Collaboration</h3>
+              <p className="feature-description">
+                Work together with your team in real-time, seeing changes as they happen.
               </p>
             </div>
-            
-            <div className="card">
-              <div className="text-center mb-4">
-                <FaUsers className="text-4xl text-primary mx-auto" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-center">Multi-user Collaboration</h3>
-              <p>
-                Invite team members, students, or friends to join your whiteboard
-                and collaborate together.
+            <div className="feature">
+              <div className="feature-icon">🔄</div>
+              <h3 className="feature-title">Infinite Canvas</h3>
+              <p className="feature-description">
+                Never run out of space with our infinite canvas technology.
               </p>
             </div>
-            
-            <div className="card">
-              <div className="text-center mb-4">
-                <FaSave className="text-4xl text-primary mx-auto" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-center">Save & Export</h3>
-              <p>
-                Save your whiteboards for later or export them as images to share
-                with others.
+            <div className="feature">
+              <div className="feature-icon">📱</div>
+              <h3 className="feature-title">Cross-Platform</h3>
+              <p className="feature-description">
+                Access your whiteboards from any device, anywhere, anytime.
               </p>
             </div>
-            
-            <div className="card">
-              <div className="text-center mb-4">
-                <FaLock className="text-4xl text-primary mx-auto" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-center">Secure & Private</h3>
-              <p>
-                Your whiteboards are secure and private. Only share with those you
-                want to collaborate with.
+            <div className="feature">
+              <div className="feature-icon">🔒</div>
+              <h3 className="feature-title">Secure Sharing</h3>
+              <p className="feature-description">
+                Control who can view and edit your whiteboards with secure sharing options.
               </p>
             </div>
           </div>
         </div>
-      </section>
+      </div>
       
-      {/* Pricing Section */}
-      <section className="py-12">
+      <div className="pricing">
         <div className="container">
-          <h2 className="text-2xl font-bold mb-8 text-center">Pricing Plans</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <h2 className="section-title">Pricing Plans</h2>
+          <div className="pricing-grid">
             <div className="subscription-card">
               <div className="subscription-name">Free</div>
               <div className="subscription-price">$0</div>
               <div className="subscription-period">forever</div>
-              
-              <ul className="subscription-features">
-                <li className="subscription-feature">
+              <div className="subscription-features">
+                <div className="subscription-feature">
                   <span className="feature-icon">✓</span>
                   <span>Up to 3 whiteboards</span>
-                </li>
-                <li className="subscription-feature">
+                </div>
+                <div className="subscription-feature">
                   <span className="feature-icon">✓</span>
                   <span>Basic drawing tools</span>
-                </li>
-                <li className="subscription-feature">
+                </div>
+                <div className="subscription-feature">
                   <span className="feature-icon">✓</span>
-                  <span>Up to 5 collaborators per board</span>
-                </li>
-                <li className="subscription-feature">
-                  <span className="feature-icon">✓</span>
-                  <span>Export as PNG</span>
-                </li>
-              </ul>
-              
-              <Link to="/register" className="btn btn-outline w-full">
-                Get Started
-              </Link>
-            </div>
-            
-            <div className="subscription-card popular">
-              <div className="badge badge-primary mb-2">Most Popular</div>
-              <div className="subscription-name">Basic</div>
-              <div className="subscription-price">$9.99</div>
-              <div className="subscription-period">per month</div>
-              
-              <ul className="subscription-features">
-                <li className="subscription-feature">
-                  <span className="feature-icon">✓</span>
-                  <span>Up to 20 whiteboards</span>
-                </li>
-                <li className="subscription-feature">
-                  <span className="feature-icon">✓</span>
-                  <span>Advanced drawing tools</span>
-                </li>
-                <li className="subscription-feature">
-                  <span className="feature-icon">✓</span>
-                  <span>Up to 20 collaborators per board</span>
-                </li>
-                <li className="subscription-feature">
-                  <span className="feature-icon">✓</span>
-                  <span>Export as PNG, JPG, PDF</span>
-                </li>
-                <li className="subscription-feature">
-                  <span className="feature-icon">✓</span>
-                  <span>Save whiteboard history</span>
-                </li>
-              </ul>
-              
+                  <span>Up to 3 collaborators</span>
+                </div>
+              </div>
               <Link to="/register" className="btn w-full">
                 Get Started
               </Link>
             </div>
             
-            <div className="subscription-card">
+            <div className="subscription-card popular">
+              <div className="badge badge-primary" style={{ position: 'absolute', top: '10px', right: '10px' }}>
+                Popular
+              </div>
               <div className="subscription-name">Pro</div>
-              <div className="subscription-price">$19.99</div>
+              <div className="subscription-price">$9.99</div>
               <div className="subscription-period">per month</div>
-              
-              <ul className="subscription-features">
-                <li className="subscription-feature">
+              <div className="subscription-features">
+                <div className="subscription-feature">
                   <span className="feature-icon">✓</span>
                   <span>Unlimited whiteboards</span>
-                </li>
-                <li className="subscription-feature">
+                </div>
+                <div className="subscription-feature">
                   <span className="feature-icon">✓</span>
-                  <span>All drawing tools</span>
-                </li>
-                <li className="subscription-feature">
+                  <span>Advanced drawing tools</span>
+                </div>
+                <div className="subscription-feature">
+                  <span className="feature-icon">✓</span>
+                  <span>Up to 10 collaborators</span>
+                </div>
+                <div className="subscription-feature">
+                  <span className="feature-icon">✓</span>
+                  <span>Export to PDF/PNG</span>
+                </div>
+              </div>
+              <Link to="/register" className="btn w-full">
+                Start Free Trial
+              </Link>
+            </div>
+            
+            <div className="subscription-card">
+              <div className="subscription-name">Team</div>
+              <div className="subscription-price">$29.99</div>
+              <div className="subscription-period">per month</div>
+              <div className="subscription-features">
+                <div className="subscription-feature">
+                  <span className="feature-icon">✓</span>
+                  <span>Everything in Pro</span>
+                </div>
+                <div className="subscription-feature">
                   <span className="feature-icon">✓</span>
                   <span>Unlimited collaborators</span>
-                </li>
-                <li className="subscription-feature">
+                </div>
+                <div className="subscription-feature">
                   <span className="feature-icon">✓</span>
-                  <span>Export in all formats</span>
-                </li>
-                <li className="subscription-feature">
-                  <span className="feature-icon">✓</span>
-                  <span>Advanced whiteboard history</span>
-                </li>
-                <li className="subscription-feature">
+                  <span>Team management</span>
+                </div>
+                <div className="subscription-feature">
                   <span className="feature-icon">✓</span>
                   <span>Priority support</span>
-                </li>
-              </ul>
-              
-              <Link to="/register" className="btn btn-outline w-full">
-                Get Started
+                </div>
+              </div>
+              <Link to="/register" className="btn w-full">
+                Contact Sales
               </Link>
             </div>
           </div>
         </div>
-      </section>
+      </div>
       
-      {/* CTA Section */}
-      <section className="py-12 bg-light text-center">
-        <div className="container">
-          <h2 className="text-2xl font-bold mb-4">Ready to Collaborate?</h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Join thousands of teams, educators, and creatives who use our
-            collaborative whiteboard to bring their ideas to life.
-          </p>
-          
-          <Link to="/register" className="btn">
-            Get Started for Free
-          </Link>
-        </div>
-      </section>
+      <style jsx>{`
+        .home {
+          padding-bottom: 4rem;
+        }
+        
+        .hero {
+          background-color: var(--light-color);
+          padding: 4rem 0;
+          margin-bottom: 4rem;
+        }
+        
+        .hero-content {
+          max-width: 800px;
+          margin: 0 auto;
+          text-align: center;
+        }
+        
+        .hero-title {
+          font-size: 2.5rem;
+          font-weight: 700;
+          margin-bottom: 1rem;
+          color: var(--dark-color);
+        }
+        
+        .hero-subtitle {
+          font-size: 1.25rem;
+          color: var(--gray-color);
+          margin-bottom: 2rem;
+        }
+        
+        .hero-actions {
+          display: flex;
+          gap: 1rem;
+          justify-content: center;
+        }
+        
+        .btn-lg {
+          padding: 0.75rem 1.5rem;
+          font-size: 1.125rem;
+        }
+        
+        .section-title {
+          font-size: 2rem;
+          font-weight: 700;
+          text-align: center;
+          margin-bottom: 3rem;
+        }
+        
+        .features {
+          margin-bottom: 4rem;
+        }
+        
+        .features-grid {
+          display: grid;
+          grid-template-columns: repeat(1, 1fr);
+          gap: 2rem;
+        }
+        
+        @media (min-width: 640px) {
+          .features-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+        
+        @media (min-width: 1024px) {
+          .features-grid {
+            grid-template-columns: repeat(4, 1fr);
+          }
+        }
+        
+        .feature {
+          text-align: center;
+          padding: 2rem;
+          background-color: white;
+          border-radius: var(--border-radius);
+          box-shadow: var(--box-shadow);
+        }
+        
+        .feature-icon {
+          font-size: 2.5rem;
+          margin-bottom: 1rem;
+        }
+        
+        .feature-title {
+          font-size: 1.25rem;
+          font-weight: 600;
+          margin-bottom: 0.5rem;
+        }
+        
+        .feature-description {
+          color: var(--gray-color);
+        }
+        
+        .pricing {
+          margin-bottom: 4rem;
+        }
+        
+        .pricing-grid {
+          display: grid;
+          grid-template-columns: repeat(1, 1fr);
+          gap: 2rem;
+        }
+        
+        @media (min-width: 768px) {
+          .pricing-grid {
+            grid-template-columns: repeat(3, 1fr);
+          }
+        }
+      `}</style>
     </div>
   );
 };

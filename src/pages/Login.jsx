@@ -5,8 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -30,8 +30,8 @@ const Login = () => {
   return (
     <div className="auth-form">
       <div className="auth-form-header">
-        <h1 className="text-2xl font-bold">Log In</h1>
-        <p className="text-gray">Welcome back! Please log in to your account.</p>
+        <h1 className="text-2xl font-bold">Login</h1>
+        <p className="text-gray">Welcome back! Please login to your account.</p>
       </div>
       
       {error && (
@@ -68,7 +68,7 @@ const Login = () => {
           className="btn w-full"
           disabled={loading}
         >
-          {loading ? 'Logging in...' : 'Log In'}
+          {loading ? 'Logging in...' : 'Login'}
         </button>
       </form>
       

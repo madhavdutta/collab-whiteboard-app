@@ -9,7 +9,7 @@ export const useStore = create((set) => ({
   tool: 'pen',
   setTool: (tool) => set({ tool }),
   
-  color: '#000000',
+  color: '#4f46e5',
   setColor: (color) => set({ color }),
   
   lineWidth: 3,

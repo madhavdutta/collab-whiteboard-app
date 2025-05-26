@@ -7,8 +7,8 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -16,7 +16,6 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate passwords match
     if (password !== confirmPassword) {
       return setError('Passwords do not match');
     }
@@ -38,7 +37,7 @@ const Register = () => {
     <div className="auth-form">
       <div className="auth-form-header">
         <h1 className="text-2xl font-bold">Create an Account</h1>
-        <p className="text-gray">Join our collaborative whiteboard platform</p>
+        <p className="text-gray">Sign up to start collaborating on whiteboards.</p>
       </div>
       
       {error && (
@@ -105,7 +104,7 @@ const Register = () => {
       <div className="auth-form-footer">
         <p>
           Already have an account?{' '}
-          <Link to="/login">Log in</Link>
+          <Link to="/login">Login</Link>
         </p>
       </div>
     </div>
