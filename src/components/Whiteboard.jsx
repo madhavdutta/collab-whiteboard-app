@@ -7,6 +7,7 @@ const Whiteboard = ({ socket, users }) => {
   const [isDrawing, setIsDrawing] = useState(false);
   const [history, setHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [cursors, setCursors] = useState({});
   
   // Get tool settings from store
   const { tool, color, lineWidth } = useStore();
@@ -84,16 +85,39 @@ const Whiteboard = ({ socket, users }) => {
       ctx.lineWidth = data.lineWidth;
       ctx.stroke();
       ctx.closePath();
+      
+      // Update cursor position
+      setCursors(prev => ({
+        ...prev,
+        [data.userId]: { x: data.currX, y: data.currY, color: data.color }
+      }));
+    });
+    
+    // Listen for cursor movement
+    socket.on('cursor-move', (data) => {
+      setCursors(prev => ({
+        ...prev,
+        [data.userId]: { x: data.x, y: data.y, color: data.color }
+      }));
     });
     
     // Listen for clear canvas event
-    socket.on('clear', () => {
+    socket.on('clear-canvas', () => {
       clearCanvas();
+    });
+    
+    // Listen for saved whiteboard data
+    socket.on('load-whiteboard', (data) => {
+      if (data && data.canvasData) {
+        loadCanvasData(data.canvasData);
+      }
     });
     
     return () => {
       socket.off('draw');
-      socket.off('clear');
+      socket.off('cursor-move');
+      socket.off('clear-canvas');
+      socket.off('load-whiteboard');
     };
   }, [socket]);
   
@@ -107,6 +131,51 @@ const Whiteboard = ({ socket, users }) => {
     newHistory.push(canvas.toDataURL());
     setHistory(newHistory);
     setHistoryIndex(newHistory.length - 1);
+  };
+  
+  // Load canvas data from server
+  const loadCanvasData = (dataUrl) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    const img = new Image();
+    img.src = dataUrl;
+    img.onload = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      
+      // Save loaded state to history
+      saveCanvasState();
+    };
+  };
+  
+  // Track cursor movement
+  const handleMouseMove = (e) => {
+    if (!socket) return;
+    
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Only emit cursor position every 50ms to reduce network traffic
+    if (!canvas.lastCursorUpdate || Date.now() - canvas.lastCursorUpdate > 50) {
+      socket.emit('cursor-move', {
+        x,
+        y,
+        color
+      });
+      canvas.lastCursorUpdate = Date.now();
+    }
+    
+    // If drawing, handle the drawing
+    if (isDrawing) {
+      draw(e);
+    }
   };
   
   // Handle drawing
@@ -193,7 +262,7 @@ const Whiteboard = ({ socket, users }) => {
     
     // Emit clear event to server
     if (socket) {
-      socket.emit('clear');
+      socket.emit('clear-canvas');
     }
   };
   
@@ -258,6 +327,14 @@ const Whiteboard = ({ socket, users }) => {
     document.body.removeChild(a);
   };
   
+  const saveWhiteboard = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !socket) return;
+    
+    const dataURL = canvas.toDataURL('image/png');
+    socket.emit('save-whiteboard', { canvasData: dataURL });
+  };
+  
   // Handle touch events for mobile
   const handleTouchStart = (e) => {
     const touch = e.touches[0];
@@ -287,7 +364,7 @@ const Whiteboard = ({ socket, users }) => {
         <canvas
           ref={canvasRef}
           onMouseDown={startDrawing}
-          onMouseMove={draw}
+          onMouseMove={handleMouseMove}
           onMouseUp={stopDrawing}
           onMouseOut={stopDrawing}
           onTouchStart={handleTouchStart}
@@ -295,6 +372,19 @@ const Whiteboard = ({ socket, users }) => {
           onTouchEnd={handleTouchEnd}
           className="whiteboard-canvas"
         />
+        
+        {/* Render cursors for other users */}
+        {Object.entries(cursors).map(([userId, cursor]) => (
+          <div
+            key={userId}
+            className="cursor"
+            style={{
+              left: `${cursor.x}px`,
+              top: `${cursor.y}px`,
+              backgroundColor: cursor.color
+            }}
+          />
+        ))}
         
         <div className="whiteboard-controls">
           <div className="control-group">
@@ -319,10 +409,32 @@ const Whiteboard = ({ socket, users }) => {
           <div className="control-group">
             <button
               className="control-btn"
+              onClick={clearCanvas}
+              title="Clear Canvas"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18"></path>
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+              </svg>
+            </button>
+            <button
+              className="control-btn"
               onClick={downloadCanvas}
               title="Download"
             >
               <FaDownload />
+            </button>
+            <button
+              className="control-btn"
+              onClick={saveWhiteboard}
+              title="Save"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
             </button>
           </div>
         </div>
@@ -365,6 +477,17 @@ const Whiteboard = ({ socket, users }) => {
           cursor: crosshair;
           box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
           border-radius: 8px;
+        }
+        
+        .cursor {
+          position: absolute;
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          transform: translate(-50%, -50%);
+          pointer-events: none;
+          z-index: 100;
+          box-shadow: 0 0 0 2px white;
         }
         
         .whiteboard-controls {

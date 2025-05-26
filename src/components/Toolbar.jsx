@@ -1,42 +1,12 @@
-import { useState, useEffect } from 'react';
-import { 
-  FaPen, 
-  FaEraser, 
-  FaFont, 
-  FaShapes, 
-  FaImage, 
-  FaTrash, 
-  FaUndo, 
-  FaRedo,
-  FaDownload,
-  FaShareAlt,
-  FaLayerGroup,
-  FaEye,
-  FaLock,
-  FaTable
-} from 'react-icons/fa';
+import { useState } from 'react';
+import { FaPen, FaEraser, FaShareAlt } from 'react-icons/fa';
 import { useStore } from '../store';
 
 const Toolbar = ({ socket, roomId, usersCount }) => {
+  const [showShareModal, setShowShareModal] = useState(false);
+  
   const { tool, setTool, color, setColor, lineWidth, setLineWidth } = useStore();
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const [showLineWidthPicker, setShowLineWidthPicker] = useState(false);
   
-  // Predefined colors
-  const colors = [
-    '#000000', // Black
-    '#ffffff', // White
-    '#4f46e5', // Indigo
-    '#0ea5e9', // Sky
-    '#10b981', // Emerald
-    '#f59e0b', // Amber
-    '#ef4444', // Red
-    '#8b5cf6', // Violet
-    '#ec4899', // Pink
-    '#06b6d4', // Cyan
-  ];
-  
-  // Handle tool change
   const handleToolChange = (newTool) => {
     setTool(newTool);
     
@@ -46,19 +16,7 @@ const Toolbar = ({ socket, roomId, usersCount }) => {
     }
   };
   
-  // Handle color change
-  const handleColorChange = (newColor) => {
-    setColor(newColor);
-    setShowColorPicker(false);
-    
-    // Emit color change to server
-    if (socket) {
-      socket.emit('colorChange', { color: newColor });
-    }
-  };
-  
-  // Handle custom color change
-  const handleCustomColorChange = (e) => {
+  const handleColorChange = (e) => {
     const newColor = e.target.value;
     setColor(newColor);
     
@@ -68,458 +26,393 @@ const Toolbar = ({ socket, roomId, usersCount }) => {
     }
   };
   
-  // Handle line width change
-  const handleLineWidthChange = (newWidth) => {
-    setLineWidth(newWidth);
-    setShowLineWidthPicker(false);
+  const handleLineWidthChange = (e) => {
+    const newLineWidth = parseInt(e.target.value);
+    setLineWidth(newLineWidth);
     
     // Emit line width change to server
     if (socket) {
-      socket.emit('lineWidthChange', { lineWidth: newWidth });
+      socket.emit('lineWidthChange', { lineWidth: newLineWidth });
     }
   };
   
-  // Handle clear canvas
-  const handleClearCanvas = () => {
-    // Confirm before clearing
-    if (window.confirm('Are you sure you want to clear the canvas?')) {
-      // Emit clear canvas event to server
-      if (socket) {
-        socket.emit('clear');
-      }
-    }
+  const handleShare = () => {
+    setShowShareModal(true);
   };
   
-  // Close pickers when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setShowColorPicker(false);
-      setShowLineWidthPicker(false);
-    };
+  const copyRoomLink = () => {
+    const roomLink = `${window.location.origin}/whiteboard/${roomId}`;
+    navigator.clipboard.writeText(roomLink);
     
-    document.addEventListener('click', handleClickOutside);
-    
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, []);
-  
-  // Prevent closing pickers when clicking inside
-  const handlePickerClick = (e) => {
-    e.stopPropagation();
+    // Show copied notification
+    const copyBtn = document.getElementById('copy-btn');
+    if (copyBtn) {
+      copyBtn.textContent = 'Copied!';
+      setTimeout(() => {
+        copyBtn.textContent = 'Copy Link';
+      }, 2000);
+    }
   };
   
   return (
     <div className="toolbar">
-      <div className="toolbar-section tools">
-        <button
-          className={`toolbar-btn ${tool === 'pen' ? 'active' : ''}`}
-          onClick={() => handleToolChange('pen')}
-          title="Pen"
-        >
-          <FaPen />
-        </button>
-        <button
-          className={`toolbar-btn ${tool === 'eraser' ? 'active' : ''}`}
-          onClick={() => handleToolChange('eraser')}
-          title="Eraser"
-        >
-          <FaEraser />
-        </button>
-        <button
-          className={`toolbar-btn ${tool === 'text' ? 'active' : ''}`}
-          onClick={() => handleToolChange('text')}
-          title="Text"
-        >
-          <FaFont />
-        </button>
-        <button
-          className={`toolbar-btn ${tool === 'shapes' ? 'active' : ''}`}
-          onClick={() => handleToolChange('shapes')}
-          title="Shapes"
-        >
-          <FaShapes />
-        </button>
-        <button
-          className={`toolbar-btn ${tool === 'image' ? 'active' : ''}`}
-          onClick={() => handleToolChange('image')}
-          title="Insert Image"
-        >
-          <FaImage />
-        </button>
-      </div>
-      
-      <div className="toolbar-section properties">
-        <div className="color-picker-container">
-          <button
-            className="toolbar-btn color-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowColorPicker(!showColorPicker);
-              setShowLineWidthPicker(false);
-            }}
-            style={{ backgroundColor: color }}
-            title="Color"
-          >
-            <span className="sr-only">Select Color</span>
-          </button>
-          
-          {showColorPicker && (
-            <div className="picker-dropdown" onClick={handlePickerClick}>
-              <div className="color-grid">
-                {colors.map((c) => (
-                  <button
-                    key={c}
-                    className={`color-option ${c === color ? 'active' : ''}`}
-                    style={{ backgroundColor: c }}
-                    onClick={() => handleColorChange(c)}
-                  />
-                ))}
-              </div>
-              <div className="custom-color">
-                <input
-                  type="color"
-                  value={color}
-                  onChange={handleCustomColorChange}
-                  title="Custom Color"
-                />
-                <span>Custom</span>
-              </div>
-            </div>
-          )}
+      <div className="toolbar-left">
+        <div className="logo">
+          <span className="logo-text">Whiteboard</span>
         </div>
         
-        <div className="line-width-container">
-          <button
-            className="toolbar-btn"
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowLineWidthPicker(!showLineWidthPicker);
-              setShowColorPicker(false);
-            }}
-            title="Line Width"
-          >
-            <div className="line-width-preview" style={{ height: `${lineWidth}px` }}></div>
-          </button>
-          
-          {showLineWidthPicker && (
-            <div className="picker-dropdown width-dropdown" onClick={handlePickerClick}>
-              <div className="width-options">
-                {[1, 2, 3, 5, 8, 12].map((width) => (
-                  <button
-                    key={width}
-                    className={`width-option ${width === lineWidth ? 'active' : ''}`}
-                    onClick={() => handleLineWidthChange(width)}
-                  >
-                    <div className="width-preview" style={{ height: `${width}px` }}></div>
-                    <span>{width}px</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+        <div className="room-info">
+          <span className="room-id">Room: {roomId}</span>
+          <span className="users-count">{usersCount} {usersCount === 1 ? 'user' : 'users'}</span>
         </div>
       </div>
       
-      <div className="toolbar-section actions">
+      <div className="toolbar-center">
+        <div className="tools">
+          <button
+            className={`tool-btn ${tool === 'pen' ? 'active' : ''}`}
+            onClick={() => handleToolChange('pen')}
+            title="Pen"
+          >
+            <FaPen />
+          </button>
+          <button
+            className={`tool-btn ${tool === 'eraser' ? 'active' : ''}`}
+            onClick={() => handleToolChange('eraser')}
+            title="Eraser"
+          >
+            <FaEraser />
+          </button>
+        </div>
+        
+        <div className="color-picker">
+          <input
+            type="color"
+            value={color}
+            onChange={handleColorChange}
+            className="color-input"
+            title="Select Color"
+            disabled={tool === 'eraser'}
+          />
+          <div
+            className="color-preview"
+            style={{ backgroundColor: color }}
+          ></div>
+        </div>
+        
+        <div className="line-width">
+          <input
+            type="range"
+            min="1"
+            max="20"
+            value={lineWidth}
+            onChange={handleLineWidthChange}
+            className="line-width-input"
+            title="Line Width"
+          />
+          <div
+            className="line-width-preview"
+            style={{
+              width: `${lineWidth * 2}px`,
+              height: `${lineWidth * 2}px`,
+              backgroundColor: tool === 'eraser' ? '#e2e8f0' : color
+            }}
+          ></div>
+        </div>
+      </div>
+      
+      <div className="toolbar-right">
         <button
-          className="toolbar-btn"
-          onClick={handleClearCanvas}
-          title="Clear Canvas"
-        >
-          <FaTrash />
-        </button>
-        <button
-          className="toolbar-btn"
+          className="share-btn"
+          onClick={handleShare}
           title="Share"
         >
           <FaShareAlt />
-        </button>
-        <button
-          className="toolbar-btn"
-          title="Layers"
-        >
-          <FaLayerGroup />
+          <span>Share</span>
         </button>
       </div>
       
-      <div className="toolbar-section view">
-        <button
-          className="toolbar-btn"
-          title="Toggle Grid"
-        >
-          <FaTable />
-        </button>
-        <button
-          className="toolbar-btn"
-          title="Preview Mode"
-        >
-          <FaEye />
-        </button>
-        <button
-          className="toolbar-btn"
-          title="Lock Canvas"
-        >
-          <FaLock />
-        </button>
-      </div>
-      
-      <div className="toolbar-section room-info">
-        <div className="room-id">
-          <span className="room-label">Room:</span>
-          <span className="room-value">{roomId}</span>
+      {showShareModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h3>Share Whiteboard</h3>
+              <button
+                className="close-btn"
+                onClick={() => setShowShareModal(false)}
+              >
+                &times;
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>Share this link with others to collaborate:</p>
+              <div className="share-link">
+                <input
+                  type="text"
+                  value={`${window.location.origin}/whiteboard/${roomId}`}
+                  readOnly
+                  className="link-input"
+                />
+                <button
+                  id="copy-btn"
+                  className="copy-btn"
+                  onClick={copyRoomLink}
+                >
+                  Copy Link
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="users-count">
-          <span className="users-dot"></span>
-          <span>{usersCount} online</span>
-        </div>
-      </div>
+      )}
       
       <style jsx>{`
         .toolbar {
           display: flex;
           align-items: center;
-          padding: 8px 16px;
+          justify-content: space-between;
+          padding: 12px 24px;
           background-color: white;
           border-bottom: 1px solid #e2e8f0;
           box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-          position: relative;
           z-index: 100;
         }
         
-        .toolbar-section {
+        .toolbar-left {
           display: flex;
           align-items: center;
+        }
+        
+        .logo {
           margin-right: 24px;
-          position: relative;
         }
         
-        .toolbar-section:not(:last-child)::after {
-          content: '';
-          position: absolute;
-          right: -12px;
-          top: 50%;
-          transform: translateY(-50%);
-          height: 24px;
-          width: 1px;
-          background-color: #e2e8f0;
-        }
-        
-        .toolbar-btn {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 40px;
-          height: 40px;
-          border: none;
-          background: none;
-          border-radius: 8px;
-          cursor: pointer;
-          color: #64748b;
-          margin-right: 4px;
-          transition: all 0.2s;
-        }
-        
-        .toolbar-btn:hover {
-          background-color: #f1f5f9;
-          color: #1e293b;
-        }
-        
-        .toolbar-btn.active {
-          background-color: #4f46e5;
-          color: white;
-        }
-        
-        .color-btn {
-          border: 2px solid #e2e8f0;
-          overflow: hidden;
-        }
-        
-        .color-picker-container, .line-width-container {
-          position: relative;
-        }
-        
-        .picker-dropdown {
-          position: absolute;
-          top: 100%;
-          left: 0;
-          margin-top: 8px;
-          background-color: white;
-          border-radius: 8px;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-          padding: 12px;
-          z-index: 10;
-          min-width: 200px;
-        }
-        
-        .color-grid {
-          display: grid;
-          grid-template-columns: repeat(5, 1fr);
-          gap: 8px;
-          margin-bottom: 12px;
-        }
-        
-        .color-option {
-          width: 24px;
-          height: 24px;
-          border-radius: 50%;
-          border: 2px solid #e2e8f0;
-          cursor: pointer;
-          transition: transform 0.2s;
-        }
-        
-        .color-option:hover {
-          transform: scale(1.1);
-        }
-        
-        .color-option.active {
-          border-color: #1e293b;
-          transform: scale(1.1);
-        }
-        
-        .custom-color {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        
-        .custom-color input {
-          width: 24px;
-          height: 24px;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-        }
-        
-        .custom-color span {
-          font-size: 12px;
-          color: #64748b;
-        }
-        
-        .line-width-preview {
-          width: 20px;
-          background-color: currentColor;
-          border-radius: 4px;
-        }
-        
-        .width-dropdown {
-          min-width: 120px;
-        }
-        
-        .width-options {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-        
-        .width-option {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 6px 8px;
-          border: none;
-          background: none;
-          border-radius: 4px;
-          cursor: pointer;
-        }
-        
-        .width-option:hover {
-          background-color: #f1f5f9;
-        }
-        
-        .width-option.active {
-          background-color: #f1f5f9;
-          font-weight: 500;
-        }
-        
-        .width-preview {
-          width: 20px;
-          background-color: currentColor;
-          border-radius: 4px;
-        }
-        
-        .width-option span {
-          font-size: 12px;
-          color: #64748b;
+        .logo-text {
+          font-size: 18px;
+          font-weight: 700;
+          color: #4f46e5;
         }
         
         .room-info {
-          margin-left: auto;
-          margin-right: 0;
           display: flex;
           flex-direction: column;
-          align-items: flex-end;
         }
         
         .room-id {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-          font-size: 12px;
-          color: #64748b;
-          margin-bottom: 2px;
-        }
-        
-        .room-label {
-          font-weight: 500;
-        }
-        
-        .room-value {
-          background-color: #f1f5f9;
-          padding: 2px 6px;
-          border-radius: 4px;
-          font-family: monospace;
+          font-size: 14px;
+          font-weight: 600;
+          color: #1e293b;
         }
         
         .users-count {
-          display: flex;
-          align-items: center;
-          gap: 6px;
           font-size: 12px;
           color: #64748b;
         }
         
-        .users-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background-color: #10b981;
+        .toolbar-center {
+          display: flex;
+          align-items: center;
+          gap: 16px;
         }
         
-        .sr-only {
+        .tools {
+          display: flex;
+          gap: 8px;
+        }
+        
+        .tool-btn {
+          width: 40px;
+          height: 40px;
+          border-radius: 8px;
+          border: 1px solid #e2e8f0;
+          background-color: white;
+          color: #64748b;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        
+        .tool-btn:hover {
+          background-color: #f8fafc;
+          color: #1e293b;
+        }
+        
+        .tool-btn.active {
+          background-color: #4f46e5;
+          color: white;
+          border-color: #4f46e5;
+        }
+        
+        .color-picker {
+          position: relative;
+          width: 40px;
+          height: 40px;
+        }
+        
+        .color-input {
           position: absolute;
-          width: 1px;
-          height: 1px;
-          padding: 0;
-          margin: -1px;
+          width: 40px;
+          height: 40px;
+          opacity: 0;
+          cursor: pointer;
+        }
+        
+        .color-preview {
+          width: 40px;
+          height: 40px;
+          border-radius: 8px;
+          border: 1px solid #e2e8f0;
+          pointer-events: none;
+        }
+        
+        .line-width {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        .line-width-input {
+          width: 100px;
+          cursor: pointer;
+        }
+        
+        .line-width-preview {
+          border-radius: 50%;
+        }
+        
+        .toolbar-right {
+          display: flex;
+          align-items: center;
+        }
+        
+        .share-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 16px;
+          border-radius: 8px;
+          border: none;
+          background-color: #4f46e5;
+          color: white;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        
+        .share-btn:hover {
+          background-color: #4338ca;
+        }
+        
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+        
+        .modal {
+          width: 90%;
+          max-width: 500px;
+          background-color: white;
+          border-radius: 12px;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
           overflow: hidden;
-          clip: rect(0, 0, 0, 0);
-          white-space: nowrap;
-          border-width: 0;
+        }
+        
+        .modal-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 16px 24px;
+          border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .modal-header h3 {
+          font-size: 18px;
+          font-weight: 600;
+          color: #1e293b;
+          margin: 0;
+        }
+        
+        .close-btn {
+          background: none;
+          border: none;
+          font-size: 24px;
+          color: #64748b;
+          cursor: pointer;
+        }
+        
+        .modal-body {
+          padding: 24px;
+        }
+        
+        .modal-body p {
+          margin-top: 0;
+          margin-bottom: 16px;
+          color: #64748b;
+        }
+        
+        .share-link {
+          display: flex;
+          gap: 8px;
+        }
+        
+        .link-input {
+          flex: 1;
+          padding: 10px 16px;
+          border-radius: 8px;
+          border: 1px solid #e2e8f0;
+          font-size: 14px;
+          color: #1e293b;
+          background-color: #f8fafc;
+        }
+        
+        .copy-btn {
+          padding: 10px 16px;
+          border-radius: 8px;
+          border: none;
+          background-color: #4f46e5;
+          color: white;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        
+        .copy-btn:hover {
+          background-color: #4338ca;
         }
         
         @media (max-width: 768px) {
           .toolbar {
-            flex-wrap: wrap;
-            gap: 8px;
-            padding: 8px;
+            flex-direction: column;
+            gap: 16px;
+            padding: 12px;
           }
           
-          .toolbar-section {
-            margin-right: 12px;
+          .toolbar-left,
+          .toolbar-center,
+          .toolbar-right {
+            width: 100%;
           }
           
-          .toolbar-section:not(:last-child)::after {
-            display: none;
+          .toolbar-left {
+            justify-content: space-between;
           }
           
-          .toolbar-btn {
-            width: 36px;
-            height: 36px;
+          .toolbar-center {
+            justify-content: center;
           }
           
-          .view, .room-info {
-            display: none;
+          .toolbar-right {
+            justify-content: center;
           }
         }
       `}</style>

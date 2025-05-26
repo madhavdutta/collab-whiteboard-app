@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
+import { io } from 'socket.io-client';
 import { useAuth } from '../contexts/AuthContext';
 import Whiteboard from '../components/Whiteboard';
 import Toolbar from '../components/Toolbar';
@@ -41,57 +42,57 @@ const WhiteboardPage = () => {
     
     // Get user ID from auth or generate one
     const userId = user?.id || localStorage.getItem('userId') || uuidv4();
+    const userName = user?.name || localStorage.getItem('userName') || 'Guest';
     
     if (!localStorage.getItem('userId')) {
       localStorage.setItem('userId', userId);
     }
     
-    // Create a mock socket for demo purposes
-    const mockSocket = {
-      emit: (event, data) => {
-        console.log(`Emitting ${event}:`, data);
-        
-        // Handle different events
-        if (event === 'toolChange') {
-          mockSocket.listeners.toolChange && mockSocket.listeners.toolChange(data);
-        } else if (event === 'colorChange') {
-          mockSocket.listeners.colorChange && mockSocket.listeners.colorChange(data);
-        } else if (event === 'lineWidthChange') {
-          mockSocket.listeners.lineWidthChange && mockSocket.listeners.lineWidthChange(data);
-        } else if (event === 'draw') {
-          mockSocket.listeners.draw && mockSocket.listeners.draw(data);
-        } else if (event === 'clear') {
-          mockSocket.listeners.clear && mockSocket.listeners.clear();
-        }
-      },
-      on: (event, callback) => {
-        if (!mockSocket.listeners) {
-          mockSocket.listeners = {};
-        }
-        mockSocket.listeners[event] = callback;
-      },
-      off: (event) => {
-        if (mockSocket.listeners) {
-          delete mockSocket.listeners[event];
-        }
-      },
-      listeners: {}
-    };
+    if (!localStorage.getItem('userName') && !user?.name) {
+      localStorage.setItem('userName', userName);
+    }
     
-    setSocket(mockSocket);
+    // Connect to Socket.io server
+    const socketInstance = io(apiUrl, {
+      query: {
+        roomId,
+        userId,
+        userName,
+        token: token || ''
+      },
+      transports: ['websocket'],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
+    });
     
-    // Simulate connected users
-    setUsers([
-      { id: userId, name: user?.name || 'You' },
-      { id: 'user2', name: 'Jane Doe' },
-      { id: 'user3', name: 'John Smith' }
-    ]);
+    // Socket event handlers
+    socketInstance.on('connect', () => {
+      console.log('Connected to socket server');
+    });
+    
+    socketInstance.on('connect_error', (err) => {
+      console.error('Socket connection error:', err);
+      setError('Failed to connect to the server. Please try again later.');
+    });
+    
+    socketInstance.on('users', (roomUsers) => {
+      setUsers(roomUsers);
+    });
+    
+    socketInstance.on('user-disconnected', (disconnectedUserId) => {
+      console.log(`User disconnected: ${disconnectedUserId}`);
+    });
+    
+    setSocket(socketInstance);
     
     return () => {
-      // Clean up
-      mockSocket.listeners = {};
+      // Clean up socket connection
+      if (socketInstance) {
+        socketInstance.disconnect();
+      }
     };
-  }, [room, user]);
+  }, [room, user, token, roomId, apiUrl]);
   
   if (loading) {
     return (
